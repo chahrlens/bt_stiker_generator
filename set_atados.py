@@ -71,16 +71,16 @@ class Doc_Reader:
 
 class Store_DB_Elements:
     def __init__(self) -> None:
-        self.laber_writer = LabelWriter("index.html", default_stylesheets=("syle.css",))
+        self.laber_writer = LabelWriter("stick.html", default_stylesheets=("style.css",))
         self.record = []
         self.product  = 0
         self.cuantity = 1
         self.price    = 2
-        self.nut      = 3
+        self.nut      = 2
 
-        self.orders = {'a1':'fulano_de_tal'}
+        self.orders = {}
 
-        self.order_detail = {'a1':['producto', 'cantidad', 'precio', 'tuerca']
+        self.order_detail = {
                             }
     def make_stiker(self) -> None:
         for order in self.orders:
@@ -91,9 +91,10 @@ class Store_DB_Elements:
     def show_order(self) -> dict:
         print("[Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
         for order in self.orders:
+            print(order)
             for items in self.order_detail[order]:
-
-                print(f"[{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
+                print(items)
+                #print(f"[{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
     
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS{}'
     def insert_order(self,order='', client='') -> None:
@@ -112,6 +113,9 @@ class Store_DB_Elements:
         if order in self.orders:
             del self.order_detail[order]
             del self.orders[order]
+    
+    def find_pair(self) ->None:
+        pass
 
 class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
@@ -121,15 +125,26 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         Store_DB_Elements.__init__(self)
         self.label_writer_f = 'Pedido_{0}_template.html'
         self.label_writer = None
-        self.querys = {'insert_atado' : "INSERT INTO productosatados (idprimary, idsecundary) VALUES ({0},{1});"}
+        self.querys = {'insert_atado' : "INSERT INTO productosatados (idprimary, idsecundary) VALUES ({0},{1});",
+                       'get_cotizaci' : "SELECT CONCAT(IF(CT.idvendedor = 1, 'A', 'B'), {0}) AS N, CL.nombre AS Cliente, PR.descripcion AS Producto, DT.cantidad, DT.precio, PR.idproducto  FROM detallecotizacion AS DT INNER JOIN cotizaciones AS CT ON DT.idcotizacion = CT.idcotizacion INNER JOIN clientes AS CL ON CT.idcliente = CL.idcliente INNER JOIN documentos AS DOC ON CT.iddocumento = DOC.iddocumento INNER JOIN productos AS PR ON DT.idproducto = PR.idproducto WHERE CT.numero = {1};",
+                       'get_pair'     : "SELECT NULL AS Result FROM productosatados WHERE NOT EXISTS(SELECT idsecundary FROM productosatados WHERE idprimary = 899) UNION SELECT idsecundary FROM productosatados WHERE idprimary = 899;"
+                       }
 
-    def make_stiker(self, order):
-        self.label_writer = LabelWriter(self.label_writer_f.format(order), default_stylesheets='style.css')
-        records = [
-            dict(sample_id="s01", sample_name="sample 1"),
-            dict(sample_id="s02", samble_name="sample 2")
-        ]
-        self.label_writer.write_labels(records, target='qrcode.pdf')
+    def add_orders(self) -> None:
+        l = []
+        self.connect_server()
+        while True:
+            order_n = input("Type Order Num")
+            cot_ = int(input("Type Correlative"))
+            if order_n == '0':
+                self.show_order()
+                self.make_stiker()
+            data = self.get_statement(self.querys['get_cotizaci'].format(order_n, cot_))
+            self.insert_order(data[0][0],data[0][1])
+            for item in data:
+                l.append(list(item[2:5]))
+            self.insert_order_detail(data[0][0], *l)
+
 
     def fuse_code(self) -> None:
         for n, x in enumerate(self.sheet[self.headers[0]]):
@@ -149,5 +164,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         app = Run_Objs(sys.argv[1], connection_config2)
     else:
-        pass
-    #app.exec_app()
+        ap = Run_Objs('', connection_config)
+        ap.add_orders()
