@@ -168,12 +168,16 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         code_product_pair = None
         for order in self.orders:
             for n, order_d in enumerate(self.order_detail[order]):
+                if order_d[self.nut-1] == 21:
+                    del self.order_detail[order][n]
+                    continue
                 code_product_pair = self.get_statement(self.querys['get_pair'].format(order_d[self.code]))[0][0]
                 if code_product_pair:
                     if code_product_pair == self.order_detail[order][n+1][self.code] and order_d[self.cuantity] == self.order_detail[order][n+1][self.cuantity]:
                         self.order_detail[order][n][self.price] = (self.order_detail[order][n][self.price] + self.order_detail[order][n+1][self.price])
                         self.order_detail[order][n][self.nut] = 'Incluye Tuerca'
                         del self.order_detail[order][n+1]
+                self.order_detail[order][n][self.price] = round(self.order_detail[order][n][self.price] ,2)
     
     def exec_app(self, option):
         self.open_doc()
