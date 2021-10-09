@@ -90,21 +90,22 @@ class Store_DB_Elements:
         self.order_detail = {
                             }
     def make_stiker(self) -> None:
+        self.show_order('make_stiker')
         for order in self.orders:
             for item_l in self.order_detail[order]:
                 self.record.append(dict(order_num=order, client_name=self.orders[order], product_name=item_l[self.product], 
                                         product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], product_nut=item_l[self.nut]))
         t = input("\n\n\n\nIngrese nombre para el archivo: ")
-        
+        self.alter_page()
         self.laber_writer.write_labels(self.record, target=t+"_.pdf")
         
-    def show_order(self) -> dict:
+    def show_order(self, caller = '') -> dict:
         print("[Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
         for order in self.orders:
-            print(order)
+            print(caller+"---"+order)
             for items in self.order_detail[order]:
-                print(items)
-                #print(f"[{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
+                #print(items)
+                print(f"[{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
     
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS{}'
     def insert_order(self,order='', client='') -> None:
@@ -115,10 +116,17 @@ class Store_DB_Elements:
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS_DETAIL{}'
     def insert_order_detail(self, order, *args) -> list:
         if order in self.order_detail:
-            print(args)
+            for item in args:
+                self.order_detail[order].append(item)
             return
         self.order_detail[order] = [l for l in args]
 
+
+    def alter_page(self):
+        y = input("n\n\n\nCambiar a hoja horizontal Y | N:  ")
+        if y.lower() == 'y':
+            self.laber_writer = LabelWriter("stick.html", default_stylesheets=("style.css", 'ext_style.css',),  items_per_page=27)
+        return
     'DELETE ANY ORDER AND CUSTOMER AND ORDER DETAILT FROM SELF.ORDERS AND SELF.ORDER_DETAIL'
     def delete_order(self, order='') -> None:
         if order in self.orders:
@@ -140,12 +148,12 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                        }
 
     def add_orders(self) -> None:
-        l = []
         self.connect_server()
         while True:
+            l = []
             order_n = input("Type Order Num: ")
             if order_n == '0':
-                self.show_order()
+                self.show_order('add_orders')
                 self.find_pair()
                 self.make_stiker()
                 return
@@ -191,8 +199,8 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         self.inser_data()
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        app = Run_Objs(sys.argv[1], connection_config2)
+        app = Run_Objs(sys.argv[1], connection_config)
         app.exec_app()
     else:
-        ap = Run_Objs('', connection_config)
+        ap = Run_Objs('', connection_config2)
         ap.add_orders()
