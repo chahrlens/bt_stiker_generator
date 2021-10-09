@@ -94,7 +94,9 @@ class Store_DB_Elements:
             for item_l in self.order_detail[order]:
                 self.record.append(dict(order_num=order, client_name=self.orders[order], product_name=item_l[self.product], 
                                         product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], product_nut=item_l[self.nut]))
-        self.laber_writer.write_labels(self.record, target='test.pdf')
+        t = input("\n\n\n\nIngrese nombre para el archivo: ")
+        
+        self.laber_writer.write_labels(self.record, target=t+"_.pdf")
         
     def show_order(self) -> dict:
         print("[Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
@@ -113,6 +115,7 @@ class Store_DB_Elements:
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS_DETAIL{}'
     def insert_order_detail(self, order, *args) -> list:
         if order in self.order_detail:
+            print(args)
             return
         self.order_detail[order] = [l for l in args]
 
@@ -147,7 +150,9 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                 self.make_stiker()
                 return
             cot_ = int(input("Type Correlative: "))
+            if not cot_: return print("Numero invalido"), self.add_orders()
             data = self.get_statement(self.querys['get_cotizaci'].format(order_n, cot_))
+            if len(data) < 1: return print("Numero invalido"), self.add_orders()
             self.insert_order(data[0][0],data[0][1])
             for item in data:
                 l.append(list(item[2:7]))
@@ -172,7 +177,8 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                     del self.order_detail[order][n]
                     continue
                 code_product_pair = self.get_statement(self.querys['get_pair'].format(order_d[self.code]))[0][0]
-                if code_product_pair:
+                maxl = len(self.order_detail[order]) -1
+                if code_product_pair and n < maxl:
                     if code_product_pair == self.order_detail[order][n+1][self.code] and order_d[self.cuantity] == self.order_detail[order][n+1][self.cuantity]:
                         self.order_detail[order][n][self.price] = (self.order_detail[order][n][self.price] + self.order_detail[order][n+1][self.price])
                         self.order_detail[order][n][self.nut] = 'Incluye Tuerca'
@@ -188,5 +194,5 @@ if __name__ == "__main__":
         app = Run_Objs(sys.argv[1], connection_config2)
         app.exec_app()
     else:
-        ap = Run_Objs('', connection_config2)
+        ap = Run_Objs('', connection_config)
         ap.add_orders()
