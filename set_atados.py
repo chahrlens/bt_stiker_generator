@@ -1,3 +1,4 @@
+from logging import shutdown
 from mysql.connector.connection import MySQLConnection
 from mysql.connector.cursor import MySQLCursorBuffered, MySQLCursorBufferedDict, MySQLCursorBufferedNamedTuple
 from mysql.connector.optionfiles import MySQLOptionsParser
@@ -100,12 +101,11 @@ class Store_DB_Elements:
         self.laber_writer.write_labels(self.record, target=t+"_.pdf")
         
     def show_order(self, caller = '') -> dict:
-        print("[Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
+        print("(POS)        [Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
         for order in self.orders:
             print(caller+"---"+order)
-            for items in self.order_detail[order]:
-                #print(items)
-                print(f"[{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
+            for n, items in enumerate(self.order_detail[order]):
+                print(f"<{n+1}>        [{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
     
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS{}'
     def insert_order(self,order='', client='') -> None:
@@ -132,7 +132,10 @@ class Store_DB_Elements:
         if order in self.orders:
             del self.order_detail[order]
             del self.orders[order]
-    
+    def delete_any_item(self, order, index) -> None:
+        if order in self.orders:
+            del self.order_detail[order][index]
+
 
 class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
@@ -166,6 +169,39 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                 l.append(list(item[2:7]))
             self.insert_order_detail(data[0][0], *l)
 
+    def add_any_order(self) ->None:
+        self.connect_server()
+        l = []
+        order_n = input("TYPE Any Order: ")
+        if not order_n: return
+        cot = int(input("TYPE Correlative: "))
+        data = self.get_statement(self.querys["get_cotizaci"].format(order_n, cot))
+        if len(data) < 1: return print("Numero invalido"), self.add_orders()
+        order_n = data[0][0]
+        self.insert_order(order_n, data[0][1])
+        for item in data:
+            l.append(list(item[2:7]))
+        self.insert_order_detail(order_n, *l)
+        self.find_pair()
+        self.show_order("Any_order")
+
+        opt = input("\n\n\nSelecionar Rango (R), Eliminacion selectiva (E): ")
+        if opt.upper() == "R":
+            i = int(input("Rango Inicio: "))
+            f = int(input("Rango Fin: "))
+            self.order_detail[order_n] = self.order_detail[order_n][i-1:f]
+            self.show_order()
+            self.make_stiker()
+        elif opt.upper() == "E":
+            i = int(input("Eliminacion selectiva ingrese pos: "))
+            while i != 0:
+                self.delete_any_item(order_n, i-1)
+                self.show_order()
+                i = int(input("Eliminacion selectiva ingrese pos: "))
+                
+            self.make_stiker()
+                
+            
 
     def fuse_code(self) -> None:
         for n, x in enumerate(self.sheet[self.headers[0]]):
@@ -202,5 +238,10 @@ if __name__ == "__main__":
         app = Run_Objs(sys.argv[1], connection_config)
         app.exec_app()
     else:
-        ap = Run_Objs('', connection_config2)
-        ap.add_orders()
+        ap = Run_Objs('', connection_config)
+        opt = input("Selectivo o Multiple? (S), (M): ")
+        if opt.upper() == "S": 
+            ap.add_any_order()
+        else:
+            ap.add_orders()
+
