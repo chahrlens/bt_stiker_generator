@@ -1,3 +1,4 @@
 # bt_stiker_generator
-# Requeriments to execute
+# Requeriments
+# python-mysql-connector
 # Blabel
