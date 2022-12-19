@@ -102,8 +102,8 @@ class Store_DB_Elements:
         self.order_detail = {
                             }
     def make_stiker(self) -> None:
-        if DTOD >= DMAX:
-            return
+        #if DTOD >= DMAX:
+        #    return
         self.show_order('make_stiker')
         for order in self.orders:
             for item_l in self.order_detail[order]:
@@ -259,18 +259,17 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         self.open_doc()
         self.fuse_code()
         self.inser_data()
+        
 if __name__ == "__main__":
-    if DTOD >= DMAX:
-        exit()
+    if len(sys.argv) > 1:
+        app = Run_Objs(sys.argv[1], connection_config)
+        app.exec_app()
     else:
-        if len(sys.argv) > 1:
-            app = Run_Objs(sys.argv[1], connection_config)
-            app.exec_app()
+        ap = Run_Objs('', connection_config)    
+        opt = input("Selectivo o Multiple? (S), (M): ")
+
+        if opt.upper() == "S": 
+            ap.add_any_order()
         else:
-            ap = Run_Objs('', connection_config)    
-            opt = input("Selectivo o Multiple? (S), (M): ")
-            if opt.upper() == "S": 
-                ap.add_any_order()
-            else:
-                ap.add_orders()
+            ap.add_orders()
     
