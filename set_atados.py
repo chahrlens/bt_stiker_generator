@@ -102,17 +102,18 @@ class Store_DB_Elements:
         for order in self.orders:
             for item_l in self.order_detail[order]:
                 self.record.append(dict(order_num=order, client_name=self.orders[order], product_name=item_l[self.product], 
-                                        product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], product_nut=item_l[self.nut], week_num = self.cur_week.get_week()))
+                                        product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], 
+                                        product_nut=item_l[self.nut], page_row = item_l[self.row] , week_num = self.cur_week.get_week()))
         t = input("\n\n\n\nIngrese nombre para el archivo: ")
         self.alter_page()
         #self.laber_writer.write_labels(self.record, target="/mnt/c/Users/Usuario/Desktop/"+t+"_.pdf")
         self.laber_writer.write_labels(self.record, target="_"+t+"_.pdf")
     def show_order(self, caller = '') -> dict:
-        print("(POS)        [Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
+        print("(POS)        [Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca],      [Row]")
         for order in self.orders:
             print(caller+"---"+order)
             for n, items in enumerate(self.order_detail[order]):
-                print(f"<{n+1}>        [{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
+                print(f"<{n+1}>        [{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}], [{items[self.row]}]")
     
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS{}'
     def insert_order(self,order='', client='') -> None:
@@ -185,7 +186,7 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
             
             #"INSERT DE DETALLES EN ARRAY ORDER DETAILL == (nombre producto, cantidad , precio "campo vacio para tuerca " numero de linea)"
             for i, item in enumerate(data):
-                l.append(list(item[2:7])+[i+1])
+                l.append(list(item[2:7])+[f"L.:{i+1}"])
             self.insert_order_detail(data[0][0], *l)
 
     def add_any_order(self) ->None:
@@ -199,8 +200,8 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         if len(data) < 1: return print("Numero invalido"), self.add_orders()
         order_n = data[0][0]
         self.insert_order(order_n, data[0][1])
-        for item in data:
-            l.append(list(item[2:7]))
+        for i, item in enumerate(data):
+            l.append(list(item[2:7])+[f"L.:{i+1}"])
         self.insert_order_detail(order_n, *l)
         self.find_pair()
         self.show_order("Any_order")
@@ -241,6 +242,7 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
     def match_pair(self, result, next):
         for val in result:
             if val[0] == next:
+                print(f"Debug => val => {val}")
                 return val
         return (None, None)
 
@@ -249,29 +251,44 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         is_pair           = None
         for order in self.orders:
             for n, order_d in enumerate(self.order_detail[order]):
-                if order_d[self.nut-1] == 21:
+                detail_legth = len(self.order_detail[order])
+                if order_d[self.code] == 21:
                     del self.order_detail[order][n]
                     continue
-
+                #"Get ID NUTS "
+                print(f"Debug =>\n{order_d}")
                 data = self.get_statement(
                     self.querys['get_pair'].format(order_d[self.code])
                     )
-
+                
+                #"match with current data nuts and next item if not data or case end of array 'order_detail', vars are [None, None] "
                 code_product_pair, is_pair = self.match_pair(
-                    data,
-                    self.order_detail[order][n+1][self.code]) if n+1 < len(self.order_detail[order]) else [None, None]
 
-                maxl = len(self.order_detail[order]) -1
+                    data, self.order_detail[order][n+1][self.code]
+
+                    ) if n+1 < detail_legth else [None, None]
+
+                maxl = detail_legth -1
 
                 if code_product_pair and n < maxl:
                     if (code_product_pair == self.order_detail[order][n+1][self.code] 
                         and (order_d[self.cuantity] == self.order_detail[order][n+1][self.cuantity]) or is_pair):
                         
                         if not is_pair:
-                            self.order_detail[order][n][self.price] = (self.order_detail[order][n][self.price] + self.order_detail[order][n+1][self.price])
+                            self.order_detail[order][n][self.price] = (
+                                self.order_detail[order][n][self.price]
+                                +
+                                self.order_detail[order][n+1][self.price]
+                                )
                         else:
-                            self.order_detail[order][n][self.cuantity] = (self.order_detail[order][n][self.cuantity] + self.order_detail[order][n+1][self.cuantity])
+                            self.order_detail[order][n][self.cuantity] = (
+                                self.order_detail[order][n][self.cuantity]
+                                +
+                                self.order_detail[order][n+1][self.cuantity]
+                                )
+
                         self.order_detail[order][n][self.nut] = 'Incluye Tuerca'
+                        self.order_detail[order][n][self.row] += ', ' + self.order_detail[order][n+1][self.row][3:]
                         del self.order_detail[order][n+1]
                 self.order_detail[order][n][self.price] = round(self.order_detail[order][n][self.price] ,2)
     
