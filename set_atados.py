@@ -1,5 +1,17 @@
+<<<<<<< HEAD
 #!/usr/bin/env python3
 from IncludeLibs import *
+=======
+from logging import shutdown
+from mysql.connector.connection import MySQLConnection
+from mysql.connector.cursor import MySQLCursorBuffered, MySQLCursorBufferedDict, MySQLCursorBufferedNamedTuple
+from mysql.connector.optionfiles import MySQLOptionsParser
+import mysql.connector	 # required pip install mysql-connector-python
+from mysql.connector import Error, errorcode
+import pandas as pd
+from blabel import LabelWriter
+import sys
+>>>>>>> main
 
 DMAX = 1670911200.0
 TOD = date.today()
@@ -96,12 +108,16 @@ class Store_DB_Elements:
         self.order_detail = {
                             }
     def make_stiker(self) -> None:
+<<<<<<< HEAD
         #if DTOD >= DMAX:
         #    return
+=======
+>>>>>>> main
         self.show_order('make_stiker')
         for order in self.orders:
             for item_l in self.order_detail[order]:
                 self.record.append(dict(order_num=order, client_name=self.orders[order], product_name=item_l[self.product], 
+<<<<<<< HEAD
                                         product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], 
                                         product_nut=item_l[self.nut], page_row = item_l[self.row] , week_num = self.cur_week.get_week()))
         t = input("\n\n\n\nIngrese nombre para el archivo: ")
@@ -114,6 +130,19 @@ class Store_DB_Elements:
             print(caller+"---"+order)
             for n, items in enumerate(self.order_detail[order]):
                 print(f"<{n+1}>        [{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}], [{items[self.row]}]")
+=======
+                                        product_cuantity=item_l[self.cuantity], product_price=item_l[self.price], product_nut=item_l[self.nut]))
+        t = input("\n\n\n\nIngrese nombre para el archivo: ")
+        self.alter_page()
+        self.laber_writer.write_labels(self.record, target=t+"_.pdf")
+        
+    def show_order(self, caller = '') -> dict:
+        print("(POS)        [Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca]")
+        for order in self.orders:
+            print(caller+"---"+order)
+            for n, items in enumerate(self.order_detail[order]):
+                print(f"<{n+1}>        [{order}], [{self.orders[order]}], [{items[self.product]}], [{items[self.cuantity]}], [{items[self.price]}], [{items[self.nut]}]")
+>>>>>>> main
     
     'APPEND ORDER ADN CUSTOMER NAME IN SELF.ORDERS{}'
     def insert_order(self,order='', client='') -> None:
@@ -161,15 +190,23 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
     def add_orders(self) -> None:
         self.connect_server()
+<<<<<<< HEAD
         while 1:
             l = []
             #order_n = input("Ingrese Numero Orden: ")
             order_n = self.integers.get_int_wmsg("Ingrese Numero Orden: ")
             if order_n == 0:
+=======
+        while True:
+            l = []
+            order_n = input("Type Order Num: ")
+            if order_n == '0':
+>>>>>>> main
                 self.show_order('add_orders')
                 self.find_pair()
                 self.make_stiker()
                 return
+<<<<<<< HEAD
             #cot_ = int(input("Ingrese Correlativo: "))
             cot_ = self.integers.get_int_wmsg("Ingrese Correlativo: ")
             for i in range (30): print('')
@@ -182,6 +219,12 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
             if len(data) < 1: return print("Numero invalido"), self.add_orders()
 
             #"INSERT DE ENCABEZADO ARRAY ORDERS == (SERIE 'A' o 'B' Y 'NOMBRE CLIENTE')"
+=======
+            cot_ = int(input("Type Correlative: "))
+            if not cot_: return print("Numero invalido"), self.add_orders()
+            data = self.get_statement(self.querys['get_cotizaci'].format(order_n, cot_))
+            if len(data) < 1: return print("Numero invalido"), self.add_orders()
+>>>>>>> main
             self.insert_order(data[0][0],data[0][1])
             
             #"INSERT DE DETALLES EN ARRAY ORDER DETAILL == (nombre producto, cantidad , precio "campo vacio para tuerca " numero de linea)"
@@ -192,30 +235,47 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
     def add_any_order(self) ->None:
         self.connect_server()
         l = []
+<<<<<<< HEAD
         order_n = self.integers.get_int_wmsg("Ingrese Numero Orden: ")
         if not order_n: return
         cot = self.integers.get_int_wmsg("Ingrese Correlativo: ")
 
+=======
+        order_n = input("TYPE Any Order: ")
+        if not order_n: return
+        cot = int(input("TYPE Correlative: "))
+>>>>>>> main
         data = self.get_statement(self.querys["get_cotizaci"].format(order_n, cot))
         if len(data) < 1: return print("Numero invalido"), self.add_orders()
         order_n = data[0][0]
         self.insert_order(order_n, data[0][1])
+<<<<<<< HEAD
         for i, item in enumerate(data):
             l.append(list(item[2:7])+[f"L.:{i+1}"])
+=======
+        for item in data:
+            l.append(list(item[2:7]))
+>>>>>>> main
         self.insert_order_detail(order_n, *l)
         self.find_pair()
         self.show_order("Any_order")
 
         opt = input("\n\n\nSelecionar Rango (R), Eliminacion selectiva (E): ")
         if opt.upper() == "R":
+<<<<<<< HEAD
             i = self.integers.get_int_wmsg("Rango Inicio: ")
             #i = int(input("Rango Inicio: "))
             f = self.integers.get_int_wmsg("Rango Fin: ")
             #f = int(input("Rango Fin: "))
+=======
+            i = int(input("Rango Inicio: "))
+            f = int(input("Rango Fin: "))
+>>>>>>> main
             self.order_detail[order_n] = self.order_detail[order_n][i-1:f]
             self.show_order()
             self.make_stiker()
         elif opt.upper() == "E":
+<<<<<<< HEAD
             #i = int(input("Eliminacion selectiva ingrese pos: "))
             i = self.integers.get_int_wmsg("Eliminacion selectiva ingrese pos: ")
             while i != 0:
@@ -224,6 +284,13 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                 
                 i = self.integers.get_int_wmsg("Eliminacion selectiva ingrese pos: ")
                 #i = int(input("Eliminacion selectiva ingrese pos: "))
+=======
+            i = int(input("Eliminacion selectiva ingrese pos: "))
+            while i != 0:
+                self.delete_any_item(order_n, i-1)
+                self.show_order()
+                i = int(input("Eliminacion selectiva ingrese pos: "))
+>>>>>>> main
                 
             self.make_stiker()
                 
@@ -255,6 +322,7 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                 if order_d[self.code] == 21:
                     del self.order_detail[order][n]
                     continue
+<<<<<<< HEAD
                 #"Get ID NUTS "
                 print(f"Debug =>\n{order_d}")
                 data = self.get_statement(
@@ -287,6 +355,13 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                                 self.order_detail[order][n+1][self.cuantity]
                                 )
 
+=======
+                code_product_pair = self.get_statement(self.querys['get_pair'].format(order_d[self.code]))[0][0]
+                maxl = len(self.order_detail[order]) -1
+                if code_product_pair and n < maxl:
+                    if code_product_pair == self.order_detail[order][n+1][self.code] and order_d[self.cuantity] == self.order_detail[order][n+1][self.cuantity]:
+                        self.order_detail[order][n][self.price] = (self.order_detail[order][n][self.price] + self.order_detail[order][n+1][self.price])
+>>>>>>> main
                         self.order_detail[order][n][self.nut] = 'Incluye Tuerca'
                         self.order_detail[order][n][self.row] += ', ' + self.order_detail[order][n+1][self.row][3:]
                         del self.order_detail[order][n+1]
@@ -302,11 +377,20 @@ if __name__ == "__main__":
         app = Run_Objs(sys.argv[1], connection_config)
         app.exec_app()
     else:
+<<<<<<< HEAD
         ap = Run_Objs('', connection_config)    
         opt = input("Selectivo o Multiple? (S), (M): ")
 
+=======
+        ap = Run_Objs('', connection_config)
+        opt = input("Selectivo o Multiple? (S), (M): ")
+>>>>>>> main
         if opt.upper() == "S": 
             ap.add_any_order()
         else:
             ap.add_orders()
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> main
