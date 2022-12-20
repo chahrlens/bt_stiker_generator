@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
-import time
-import datetime
-from datetime import date
-from mysql import connector # required pip install mysql-connector-python
-from mysql.connector import Error, errorcode
-import pandas as pd
-from blabel import LabelWriter
-import seek_week
-import sys
+from IncludeLibs import *
+
 DMAX = 1670911200.0
 TOD = date.today()
 STRTOD = TOD.strftime("%d/%m/%Y")
@@ -21,7 +14,7 @@ connection_config_mc = {
 
 connection_config_2= {
 	'host'    	 : 'localhost',
-	'database'	 : 'starbusiness',
+	'database'	 : 'starbusines_my',
 	'user'    	 : 'master',
 	'password'	 : 'asd.123',
 	'auth_plugin': 'mysql_native_password'}    
@@ -34,7 +27,7 @@ connection_config_my = {
 	'auth_plugin': 'mysql_native_password'}
 
 #CONNECT TO SERVER
-connection_config = connection_config_mc
+connection_config = connection_config_2
 class Control_Server:
     def __init__(self, connection_config_parser) -> None:
         self.connection_config_parser = connection_config_parser
@@ -96,6 +89,7 @@ class Store_DB_Elements:
         self.price    = 2
         self.code     = 3
         self.nut      = 4
+        self.row      = 5
 
         self.orders = {}
 
@@ -153,6 +147,7 @@ class Store_DB_Elements:
 class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
     def __init__(self, file_name_ = None, conexion_config_parser_ = None) -> None:
+        self.integers = INTEGERS()
         Doc_Reader.__init__(self, file_name =file_name_)
         Control_Server.__init__(self, connection_config_parser=conexion_config_parser_)
         Store_DB_Elements.__init__(self)
@@ -167,28 +162,39 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         self.connect_server()
         while 1:
             l = []
-            order_n = input("Ingrese Numero Orden: ")
-            if order_n == '0':
+            #order_n = input("Ingrese Numero Orden: ")
+            order_n = self.integers.get_int_wmsg("Ingrese Numero Orden: ")
+            if order_n == 0:
                 self.show_order('add_orders')
                 self.find_pair()
                 self.make_stiker()
                 return
-            cot_ = int(input("Ingrese Correlativo: "))
+            #cot_ = int(input("Ingrese Correlativo: "))
+            cot_ = self.integers.get_int_wmsg("Ingrese Correlativo: ")
             for i in range (30): print('')
+            
+            #"COMPROBANDO QUE NO HAYA DATOS INVALIDOS"
             if not cot_: return print("Numero invalido"), self.add_orders()
+
+            #"LLAMADA AL SERVIDOS A OBTENER DATOS DE LA COTIZACION"
             data = self.get_statement(self.querys['get_cotizaci'].format(order_n, cot_))
             if len(data) < 1: return print("Numero invalido"), self.add_orders()
+
+            #"INSERT DE ENCABEZADO ARRAY ORDERS == (SERIE 'A' o 'B' Y 'NOMBRE CLIENTE')"
             self.insert_order(data[0][0],data[0][1])
-            for item in data:
-                l.append(list(item[2:7]))
+            
+            #"INSERT DE DETALLES EN ARRAY ORDER DETAILL == (nombre producto, cantidad , precio "campo vacio para tuerca " numero de linea)"
+            for i, item in enumerate(data):
+                l.append(list(item[2:7])+[i+1])
             self.insert_order_detail(data[0][0], *l)
 
     def add_any_order(self) ->None:
         self.connect_server()
         l = []
-        order_n = input("Ingrese numero de Ordern: ")
+        order_n = self.integers.get_int_wmsg("Ingrese Numero Orden: ")
         if not order_n: return
-        cot = int(input("Ingrese Correlativo: "))
+        cot = self.integers.get_int_wmsg("Ingrese Correlativo: ")
+
         data = self.get_statement(self.querys["get_cotizaci"].format(order_n, cot))
         if len(data) < 1: return print("Numero invalido"), self.add_orders()
         order_n = data[0][0]
@@ -201,17 +207,22 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
         opt = input("\n\n\nSelecionar Rango (R), Eliminacion selectiva (E): ")
         if opt.upper() == "R":
-            i = int(input("Rango Inicio: "))
-            f = int(input("Rango Fin: "))
+            i = self.integers.get_int_wmsg("Rango Inicio: ")
+            #i = int(input("Rango Inicio: "))
+            f = self.integers.get_int_wmsg("Rango Fin: ")
+            #f = int(input("Rango Fin: "))
             self.order_detail[order_n] = self.order_detail[order_n][i-1:f]
             self.show_order()
             self.make_stiker()
         elif opt.upper() == "E":
-            i = int(input("Eliminacion selectiva ingrese pos: "))
+            #i = int(input("Eliminacion selectiva ingrese pos: "))
+            i = self.integers.get_int_wmsg("Eliminacion selectiva ingrese pos: ")
             while i != 0:
                 self.delete_any_item(order_n, i-1)
                 self.show_order()
-                i = int(input("Eliminacion selectiva ingrese pos: "))
+                
+                i = self.integers.get_int_wmsg("Eliminacion selectiva ingrese pos: ")
+                #i = int(input("Eliminacion selectiva ingrese pos: "))
                 
             self.make_stiker()
                 
@@ -241,12 +252,21 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                 if order_d[self.nut-1] == 21:
                     del self.order_detail[order][n]
                     continue
-                data = self.get_statement(self.querys['get_pair'].format(order_d[self.code]))
-                code_product_pair, is_pair = self.match_pair(data, self.order_detail[order][n+1][self.code]) if n+1 < len(self.order_detail[order]) else [None, None]
+
+                data = self.get_statement(
+                    self.querys['get_pair'].format(order_d[self.code])
+                    )
+
+                code_product_pair, is_pair = self.match_pair(
+                    data,
+                    self.order_detail[order][n+1][self.code]) if n+1 < len(self.order_detail[order]) else [None, None]
+
                 maxl = len(self.order_detail[order]) -1
+
                 if code_product_pair and n < maxl:
                     if (code_product_pair == self.order_detail[order][n+1][self.code] 
                         and (order_d[self.cuantity] == self.order_detail[order][n+1][self.cuantity]) or is_pair):
+                        
                         if not is_pair:
                             self.order_detail[order][n][self.price] = (self.order_detail[order][n][self.price] + self.order_detail[order][n+1][self.price])
                         else:
