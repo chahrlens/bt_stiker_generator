@@ -74,6 +74,10 @@ h1 {
     font-weight: bold;
 
 }
+.date{
+    font-size: 9px;
+    justify-content: space-between;
+    }
 
 .mtext {
     color: black;
