@@ -2,3 +2,4 @@
 # Requeriments
 # mysql-connector-python
 # Blabel
+# Pandas
