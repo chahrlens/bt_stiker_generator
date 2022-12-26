@@ -8,3 +8,4 @@ from blabel import LabelWriter
 import seek_week
 import sys
 from Integers import INTEGERS
+from getSettings import *

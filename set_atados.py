@@ -5,29 +5,7 @@ DMAX = 1670911200.0
 TOD = date.today()
 STRTOD = TOD.strftime("%d/%m/%Y")
 DTOD =  time.mktime(datetime.datetime.strptime(STRTOD, "%d/%m/%Y").timetuple())
-connection_config_mc = {
-	'host'    	 : '192.168.2.50',
-	'database'	 : 'nsr_starbusiness',
-	'user'    	 : 'master',
-	'password'	 : 'asd.123',
-	'auth_plugin': 'mysql_native_password'}
 
-connection_config_2= {
-	'host'    	 : 'localhost',
-	'database'	 : 'starbusines_my',
-	'user'    	 : 'master',
-	'password'	 : 'asd.123',
-	'auth_plugin': 'mysql_native_password'}    
-
-connection_config_my = {
-	'host'    	 : '192.168.0.103',
-	'database'	 : 'starbusines_my',
-	'user'    	 : 'root',
-	'password'	 : '',
-	'auth_plugin': 'mysql_native_password'}
-
-#CONNECT TO SERVER
-connection_config = connection_config_2
 class Control_Server:
     def __init__(self, connection_config_parser) -> None:
         self.connection_config_parser = connection_config_parser
@@ -298,6 +276,10 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
         self.inser_data()
         
 if __name__ == "__main__":
+    #Get Server Settings
+    sql_settings = SQLSettings()
+    connection_config = sql_settings.connection_conf
+
     if len(sys.argv) > 1:
         app = Run_Objs(sys.argv[1], connection_config)
         app.exec_app()
