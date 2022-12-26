@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 from IncludeLibs import *
 
-DMAX = 1670911200.0
-TOD = date.today()
-STRTOD = TOD.strftime("%d/%m/%Y")
-DTOD =  time.mktime(datetime.datetime.strptime(STRTOD, "%d/%m/%Y").timetuple())
-
 class Control_Server:
     def __init__(self, connection_config_parser) -> None:
         self.connection_config_parser = connection_config_parser
@@ -74,8 +69,6 @@ class Store_DB_Elements:
         self.order_detail = {
                             }
     def make_stiker(self) -> None:
-        #if DTOD >= DMAX:
-        #    return
         self.show_order('make_stiker')
         for order in self.orders:
             for item_l in self.order_detail[order]:
@@ -84,8 +77,8 @@ class Store_DB_Elements:
                                         product_nut=item_l[self.nut], page_row = item_l[self.row] , week_num = self.cur_week.get_week()))
         t = input("\n\n\n\nIngrese nombre para el archivo: ")
         self.alter_page()
-        #self.laber_writer.write_labels(self.record, target="/mnt/c/Users/Usuario/Desktop/"+t+"_.pdf")
-        self.laber_writer.write_labels(self.record, target="_"+t+"_.pdf")
+        #Write File
+        self.laber_writer.write_labels(self.record, target=self.path+'/_'+t+"_.pdf")
     def show_order(self, caller = '') -> dict:
         print("(POS)        [Orden],     [Cliente],          [Producto],          [Cantidad],        [Precio],       [Tuerca],      [Row]")
         for order in self.orders:
@@ -125,7 +118,8 @@ class Store_DB_Elements:
 
 class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
 
-    def __init__(self, file_name_ = None, conexion_config_parser_ = None) -> None:
+    def __init__(self, file_name_ = None, path = '.', conexion_config_parser_ = None) -> None:
+        self.path = path
         self.integers = INTEGERS()
         Doc_Reader.__init__(self, file_name =file_name_)
         Control_Server.__init__(self, connection_config_parser=conexion_config_parser_)
@@ -220,7 +214,6 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
     def match_pair(self, result, next):
         for val in result:
             if val[0] == next:
-                print(f"Debug => val => {val}")
                 return val
         return (None, None)
 
@@ -234,7 +227,6 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                     del self.order_detail[order][n]
                     continue
                 #"Get ID NUTS "
-                print(f"Debug =>\n{order_d}")
                 data = self.get_statement(
                     self.querys['get_pair'].format(order_d[self.code])
                     )
@@ -279,12 +271,13 @@ if __name__ == "__main__":
     #Get Server Settings
     sql_settings = SQLSettings()
     connection_config = sql_settings.connection_conf
+    my_path           = sql_settings.path
 
     if len(sys.argv) > 1:
         app = Run_Objs(sys.argv[1], connection_config)
         app.exec_app()
     else:
-        ap = Run_Objs('', connection_config)    
+        ap = Run_Objs('', my_path, connection_config)    
         opt = input("Selectivo o Multiple? (S), (M): ")
 
         if opt.upper() == "S": 
