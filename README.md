@@ -35,7 +35,7 @@ pip3 install pandas
 ```
 
 ## Usage
-In order to enjoy make sure you have python 3.7+ installed you must also have python3-pip installed in order to install the script requirements.  So far it has only been tested on Linux host, for use on Windows only with Linux on WSL2.  For the first time run the
+In order to enjoy it,  make sure you have python 3.7+ installed,  you must also have python3-pip installed in order to install the script requirements. So far it has only been tested on Linux host, for Windows  user has not been tested yet only with Linux on WSL2. For the first time run the
 
 
 ```bash
