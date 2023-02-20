@@ -66,8 +66,7 @@ class Store_DB_Elements:
 
         self.orders = {}
 
-        self.order_detail = {
-                            }
+        self.order_detail = {}
     def make_stiker(self) -> None:
         self.show_order('make_stiker')
         for order in self.orders:
@@ -131,6 +130,19 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
                        'get_pair'     : "SELECT NULL AS Result1, NULL AS Result2 FROM productosatados WHERE NOT EXISTS(SELECT idsecundary, impar FROM productosatados WHERE idprimary = {0}) UNION SELECT idsecundary, impar FROM productosatados WHERE idprimary = {0};"
                        }
 
+    def list_orders(self) -> None:
+        string = "Orden: # {0}; {1} == Lineas = {2}";
+        #print(self.order_detail)
+        keys = list(self.orders )
+        max_index = len(keys)
+        index = 0
+        while (index < max_index):
+            s1 = f"{string.format(keys[index], self.orders[keys[index]][:10], len(self.order_detail[keys[index]]))}"
+            index += 1
+            s2 = f" |-| {string.format(keys[index], self.orders[keys[index]][:10], len(self.order_detail[keys[index]]))}" if index < max_index else '-' 
+            print(s1 + s2)
+            #print(string.format(keys[index], len(self.order_detail[keys[index]])))
+            index +=1
     def add_orders(self) -> None:
         self.connect_server()
         while 1:
@@ -160,6 +172,8 @@ class Run_Objs(Doc_Reader, Control_Server, Store_DB_Elements):
             for i, item in enumerate(data):
                 l.append(list(item[2:7])+[f"L.:{i+1}"])
             self.insert_order_detail(data[0][0], *l)
+
+            self.list_orders()
 
     def add_any_order(self) ->None:
         self.connect_server()
